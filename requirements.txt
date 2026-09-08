@@ -1,0 +1,7 @@
+# Porovnání změn v síti OSM
+osmnx>=1.9          # stažení aktuálního stavu sítě ze stejného rozsahu
+geopandas>=0.14     # čtení a zápis GeoPackage
+shapely>=2.0
+pandas>=2.0
+requests>=2.31      # Overpass API (zákazy odbočení, pruhové tagy)
+pyogrio>=0.7        # rychlé čtení/zápis GPKG (tahá si i geopandas)
