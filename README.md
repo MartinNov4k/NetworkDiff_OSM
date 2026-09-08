@@ -107,6 +107,21 @@ Relace, která byla smazána a znovu založena se stejným obsahem (stejné
   obecná úprava. Prázdná hodnota v `value_old`/`value_new` znamená, že tag
   v OSM nebyl vyplněn.
 
+## HTML přehled změn
+
+Z vygenerovaných CSV se dá poskládat jednostránkový vizuální přehled:
+
+```bash
+python report/build_report.py vystup/ways_changed.csv vystup/nodes_changed.csv \
+    vystup/turn_restrictions.csv -o report/network_diff_report.html
+```
+
+Výsledkem je jeden soubor HTML s vloženými daty (bez externích závislostí),
+který se otevře v prohlížeči. Do přehledu vstupují jen změny hran
+s `confidence=high`; u atributu `maxspeed` navíc jen ty, které měly hodnotu
+uvedenou před i po – doplnění dosud chybějící rychlosti se za změnu hodnoty
+nepovažuje. Šablona vzhledu je `report/template.html`.
+
 ## Testy
 
 ```bash
