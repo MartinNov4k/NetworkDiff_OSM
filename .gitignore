@@ -4,3 +4,6 @@ vystup/
 cache/
 *.gpkg
 !/data/*.gpkg
+
+report/.osm_history_cache.json
+report/history.json

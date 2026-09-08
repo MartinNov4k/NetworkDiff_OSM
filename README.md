@@ -107,20 +107,65 @@ Relace, která byla smazána a znovu založena se stejným obsahem (stejné
   obecná úprava. Prázdná hodnota v `value_old`/`value_new` znamená, že tag
   v OSM nebyl vyplněn.
 
-## HTML přehled změn
+## HTML přehled změn pro model
 
-Z vygenerovaných CSV se dá poskládat jednostránkový vizuální přehled:
+Ze CSV výstupů se dá poskládat jednostránkový přehled zaměřený na to, co má
+dopad na dopravní model:
 
 ```bash
 python report/build_report.py vystup/ways_changed.csv vystup/nodes_changed.csv \
     vystup/turn_restrictions.csv -o report/network_diff_report.html
 ```
 
-Výsledkem je jeden soubor HTML s vloženými daty (bez externích závislostí),
-který se otevře v prohlížeči. Do přehledu vstupují jen změny hran
-s `confidence=high`; u atributu `maxspeed` navíc jen ty, které měly hodnotu
-uvedenou před i po – doplnění dosud chybějící rychlosti se za změnu hodnoty
-nepovažuje. Šablona vzhledu je `report/template.html`.
+Výsledkem je jeden soubor HTML s vloženými daty (bez externích závislostí).
+Šablona vzhledu je `report/template.html`.
+
+**Co přehledem projde.** Jen změny hran s `confidence=high`, a z nich jen
+atributy, které mění chování sítě v přiřazení: `oneway`, `access`, `maxspeed`
+a `lanes`. U `maxspeed` a `lanes` navíc jen tam, kde byla hodnota uvedená před
+i po – samotné doplnění dosud chybějícího tagu není změna v terénu. Dál projdou
+změny řízení křižovatek, počtu ramen a zákazy odbočení. Odfiltrovaná je třída
+komunikace, název, číslo silnice a šířka; vrstvy `ways_added` a `ways_removed`
+přehled nezpracovává. Kolik toho filtr zahodil, je vidět na konci stránky.
+
+## Kdo změnu udělal a proč
+
+Diff porovnává dva *stavy* sítě, takže sám o sobě neodliší reálnou změnu
+v terénu od přetagování. To doplní `report/osm_history.py`: ke každé položce
+dohledá v historii objektu changeset, který sledovaný tag skutečně změnil,
+a stáhne k němu autora, komentář, editor a velikost.
+
+```bash
+python report/osm_history.py vystup/ways_changed.csv vystup/nodes_changed.csv \
+    vystup/turn_restrictions.csv --since 2024-01-01 -o report/history.json
+
+python report/build_report.py vystup/ways_changed.csv vystup/nodes_changed.csv \
+    vystup/turn_restrictions.csv --history report/history.json --since 2024-01-01
+```
+
+`--since` je datum referenčního stavu (stejné, jaké script vypíše jako
+„datum referenčního stavu" v souhrnu). Odpovědi se cachují do
+`report/.osm_history_cache.json`, takže opakovaný běh nestahuje znovu totéž;
+mezi dotazy se čeká `--sleep` sekund (výchozí 0,4), aby to bylo k API slušné.
+
+Každá položka pak dostane jedno z označení:
+
+| Označení | Co to znamená |
+| --- | --- |
+| **lokální editace** | malý changeset na jednom místě – nejlepší kandidát na reálnou změnu |
+| **mikrotagování** | StreetComplete / Every Door / MapRoulette – obvykle doplnění stavu, který platil už dřív (u `maxspeed` ale často jde o skutečně odečtenou značku) |
+| **hromadná editace** | changeset s velkým počtem změn (práh `--bulk-threshold`) |
+| **kampaň** | jeden changeset mění tentýž tag na mnoha objektech (práh `--campaign-threshold`) – úklid dat, ne terén |
+| **beze změny tagu** | v historii objektu odpovídající editace není – řádek v diffu vznikl zpracováním grafu (rozdělení nebo sloučení way) |
+
+Poslední řádek je nejužitečnější: odhalí položky, které nevznikly žádnou
+editací v OSM, takže do modelu nepatří.
+
+Testy vyhodnocování historie (offline, bez sítě):
+
+```bash
+python report/test_osm_history.py
+```
 
 ## Testy
 
