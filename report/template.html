@@ -99,31 +99,30 @@ section{margin-bottom:60px;scroll-margin-top:16px}
 .stack{display:flex;gap:2px;height:16px}
 .stack span{display:block;border-radius:1px;min-width:2px}
 
-/* ---------- matice tříd ---------- */
-.matrix-scroll{overflow-x:auto;padding-bottom:4px}
-.matrix{border-collapse:separate;border-spacing:2px;font-size:11.5px}
-.matrix th{font-family:"IBM Plex Mono",monospace;font-weight:500;color:var(--muted);
-  font-size:10.5px;letter-spacing:.04em;padding:2px 4px;white-space:nowrap}
-.matrix th.rowh{text-align:right}
-.matrix td{width:34px;height:30px;text-align:center;border-radius:2px;
-  font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink);
-  background:color-mix(in srgb, var(--heat) calc(var(--a) * 1%), var(--surface))}
-.matrix td.zero{background:var(--surface-2);color:transparent}
-.matrix td.diag{outline:1px dashed var(--axis);outline-offset:-1px}
-.matrix td.hot{color:var(--heat-ink)}
-.matrix td[data-tip]:hover{outline:2px solid var(--ink);outline-offset:-1px}
-.legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:14px;
+/* ---------- legendy ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin-top:14px;
   font-size:12px;color:var(--ink-2)}
 .legend .key{display:inline-flex;align-items:center;gap:6px}
-.legend .sw{width:11px;height:11px;border-radius:2px;display:inline-block;box-shadow:0 0 0 1px var(--ring)}
-.ramp{display:flex;gap:2px;align-items:center}
-.ramp i{width:16px;height:10px;display:block;border-radius:1px}
+.legend .sw{width:11px;height:11px;border-radius:2px;display:inline-block;flex:none;
+  box-shadow:0 0 0 1px var(--ring)}
+.legend b{color:var(--ink);font-weight:600}
 
-/* ---------- klíč zkratek ---------- */
-.abbr{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:5px 18px;
-  margin-top:16px;font-size:11.5px;color:var(--ink-2)}
-.abbr div{display:flex;gap:8px}
-.abbr b{font-family:"IBM Plex Mono",monospace;font-weight:500;color:var(--ink);min-width:38px}
+/* ---------- štítky stavu ---------- */
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:2px 9px;
+  border-radius:999px;border:1px solid var(--rule);background:var(--surface-2);
+  color:var(--ink);white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--pc,var(--muted))}
+.pill-up{--pc:var(--up)}
+.pill-down{--pc:var(--down)}
+.pill-flat{--pc:var(--muted)}
+.flag{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-2);
+  white-space:nowrap;cursor:help}
+.flag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fc);flex:none}
+a.hist{font-size:11.5px;color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--axis)}
+a.hist:hover{color:var(--accent);border-bottom-color:var(--accent)}
+pre.cmd{background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;
+  padding:12px 14px;overflow-x:auto;font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:12px;line-height:1.65;color:var(--ink-2);margin:0}
 
 /* ---------- tabulky ---------- */
 .tbl-scroll{overflow-x:auto}
@@ -144,7 +143,7 @@ table.data td.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tab
 /* ---------- filtry ---------- */
 .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
 .controls input{font:inherit;font-size:13px;padding:6px 11px;border:1px solid var(--rule);
-  border-radius:3px;background:var(--surface);color:var(--ink);min-width:230px}
+  border-radius:3px;background:var(--surface);color:var(--ink);min-width:310px}
 .controls input::placeholder{color:var(--muted)}
 button.f{font:inherit;font-size:12.5px;padding:5px 12px;border:1px solid var(--rule);
   border-radius:999px;background:var(--surface);color:var(--ink-2);cursor:pointer}
@@ -174,151 +173,162 @@ footer p{margin:0 0 8px}
 
 <div class="wrap">
   <header class="masthead">
-    <div class="eyebrow">OSM network diff · filtr confidence = high</div>
-    <h1>Diff silniční sítě OSM</h1>
-    <p class="lede">Porovnání aktuálních dat OpenStreetMap proti snapshotu sítě. Zobrazeny jsou
-      pouze rozdíly označené vysokou jistotou (<span class="mono">high</span>) — hodnoty odvozené
-      ze sloučených hran jsou vynechány.</p>
+    <div class="eyebrow">OSM network diff · jen změny s dopadem na model</div>
+    <h1>Změny pro dopravní model</h1>
+    <p class="lede">Z diffu prošly jen změny, které mění chování sítě v přiřazení —
+      jednosměrnost, nejvyšší rychlost, počet pruhů, přístupnost, řízení křižovatek
+      a zákazy odbočení. Přetagování a doplňování chybějících tagů je odfiltrované,
+      nové a zaniklé komunikace se neřeší.</p>
     <div class="meta" id="meta"></div>
   </header>
 
   <div class="kpis" id="kpis"></div>
 
-  <section id="ways">
+  <section id="hist">
+    <div class="panel" id="hist-panel"></div>
+  </section>
+
+  <section id="oneway">
     <div class="shead">
-      <div class="eyebrow">way</div>
-      <h2>Hrany sítě</h2>
-      <div class="count" id="ways-count"></div>
+      <div class="eyebrow">way · oneway</div>
+      <h2>Jednosměrnost</h2>
+      <div class="count" id="oneway-count"></div>
     </div>
-    <p class="snote" id="ways-note"></p>
+    <p class="snote">Změna směru pojezdu mění dostupnost celé oblasti — nejsilnější
+      položka v celém diffu. Ověřit v terénu nebo v pasportu dopravního značení.</p>
+    <div class="tbl-scroll"><table class="data" id="oneway-table"></table></div>
+  </section>
+
+  <section id="speed">
+    <div class="shead">
+      <div class="eyebrow">way · maxspeed</div>
+      <h2>Nejvyšší rychlost</h2>
+      <div class="count" id="speed-count"></div>
+    </div>
+    <p class="snote" id="speed-note"></p>
     <div class="grid g2">
       <div class="panel">
-        <h3>Co se na hranách změnilo</h3>
-        <p class="sub">Počet hran podle typu atributu, v závorce délka dotčených úseků</p>
-        <div class="bars" id="cat-bars"></div>
-      </div>
-      <div class="panel">
-        <h3>Třída komunikace — směr změny</h3>
-        <p class="sub">Posun v hierarchii podle pořadí trunk → primary → secondary → tertiary → residential</p>
-        <div id="cls-dir"></div>
-        <div class="bars" id="cls-top" style="margin-top:18px"></div>
-      </div>
-    </div>
-
-    <div class="panel" style="margin-top:22px">
-      <h3>Matice přeřazení tříd</h3>
-      <p class="sub">Řádek = původní třída, sloupec = nová třída. Číslo v buňce je počet hran.</p>
-      <div class="matrix-scroll"><table class="matrix" id="matrix"></table></div>
-      <div class="legend">
-        <span>Počet hran</span>
-        <span class="ramp" id="ramp"></span>
-        <span class="mono" id="ramp-max"></span>
-        <span class="key"><span class="sw" style="outline:1px dashed var(--axis);outline-offset:-1px;background:var(--surface-2)"></span> beze změny třídy (jen ostatní atributy)</span>
-      </div>
-      <div class="abbr" id="abbr"></div>
-    </div>
-
-    <div class="grid g2" style="margin-top:22px">
-      <div class="panel">
-        <h3>Nejvyšší povolená rychlost</h3>
-        <p class="sub" id="speed-sub"></p>
+        <h3>Z čeho na co</h3>
+        <p class="sub">Vlevo původní hodnota, vpravo nová; tloušťka čáry = počet hran</p>
         <div id="speed-slope"></div>
         <div class="legend">
           <span class="key"><span class="sw" style="background:var(--down)"></span> zpomalení</span>
           <span class="key"><span class="sw" style="background:var(--up)"></span> zrychlení</span>
-          <span style="color:var(--muted)">tloušťka čáry = počet hran</span>
         </div>
       </div>
       <div class="panel">
-        <h3>Hrany se změněnou rychlostí</h3>
-        <p class="sub">Všech <span id="speed-n"></span> hran, kde byla rychlost uvedena před i po</p>
-        <div class="tbl-scroll" style="max-height:420px;overflow-y:auto">
+        <h3>Dotčené hrany</h3>
+        <p class="sub">Řazeno podle velikosti změny</p>
+        <div class="tbl-scroll" style="max-height:430px;overflow-y:auto">
           <table class="data" id="speed-table"></table>
         </div>
       </div>
     </div>
+  </section>
 
-    <div class="grid g3" style="margin-top:22px" id="attr-panels"></div>
-
-    <div class="panel" style="margin-top:22px">
-      <h3>Názvy ulic</h3>
-      <p class="sub" id="name-sub"></p>
-      <div class="tbl-scroll"><table class="data" id="name-table"></table></div>
+  <section id="capacity">
+    <div class="shead">
+      <div class="eyebrow">way · lanes, access</div>
+      <h2>Kapacita a přístupnost</h2>
+      <div class="count" id="cap-count"></div>
+    </div>
+    <p class="snote">Změny počtu pruhů z hodnoty na hodnotu (samotné doplnění chybějícího
+      <span class="mono">lanes</span> je odfiltrované) a změny omezení vjezdu.</p>
+    <div class="grid g2">
+      <div class="panel">
+        <h3>Počet jízdních pruhů</h3>
+        <p class="sub" id="lanes-sub"></p>
+        <div class="tbl-scroll"><table class="data" id="lanes-table"></table></div>
+      </div>
+      <div class="panel">
+        <h3>Přístupnost</h3>
+        <p class="sub" id="access-sub"></p>
+        <div class="tbl-scroll"><table class="data" id="access-table"></table></div>
+      </div>
     </div>
   </section>
 
-  <section id="nodes">
+  <section id="junctions">
     <div class="shead">
       <div class="eyebrow">node</div>
-      <h2>Uzly a křižovatky</h2>
-      <div class="count" id="nodes-count"></div>
+      <h2>Křižovatky</h2>
+      <div class="count" id="node-count"></div>
     </div>
-    <p class="snote">Uzly nemají ve výstupu příznak jistoty — uvedeny jsou všechny zaznamenané změny
-      počtu ramen křižovatky a jejího řízení.</p>
     <div class="grid g2">
+      <div class="panel">
+        <h3>Světelná signalizace</h3>
+        <p class="sub" id="signal-sub"></p>
+        <div class="tbl-scroll"><table class="data" id="signal-table"></table></div>
+      </div>
       <div class="panel">
         <h3>Počet ramen křižovatky</h3>
         <p class="sub" id="arms-sub"></p>
         <div class="bars" id="arms-bars"></div>
+        <p class="sub" style="margin:16px 0 0">Pozor: část těchto změn vzniká rozdělením
+          nebo sloučením way, ne novým připojením. Bez pohledu do mapy nerozhodnutelné.</p>
         <div class="legend">
           <span class="key"><span class="sw" style="background:var(--up)"></span> rameno přibylo</span>
           <span class="key"><span class="sw" style="background:var(--down)"></span> rameno ubylo</span>
         </div>
       </div>
-      <div class="panel">
-        <h3>Řízení křižovatky</h3>
-        <p class="sub" id="ctrl-sub"></p>
-        <div class="tbl-scroll"><table class="data" id="ctrl-table"></table></div>
+    </div>
+    <div class="panel" style="margin-top:22px" id="arms-detail-panel">
+      <h3>Uzly se změněným počtem ramen</h3>
+      <p class="sub">Řazeno podle velikosti změny</p>
+      <div class="tbl-scroll" style="max-height:340px;overflow-y:auto">
+        <table class="data" id="arms-table"></table>
       </div>
     </div>
   </section>
 
-  <section id="rels">
+  <section id="turns">
     <div class="shead">
-      <div class="eyebrow">relation</div>
+      <div class="eyebrow">relation · restriction</div>
       <h2>Zákazy odbočení</h2>
-      <div class="count" id="rels-count"></div>
+      <div class="count" id="turn-count"></div>
     </div>
-    <p class="snote" id="rels-note"></p>
-    <div class="grid g2">
-      <div class="panel">
-        <h3>Podle typu omezení</h3>
-        <p class="sub">Relace typu <span class="mono">restriction</span>, řazeno podle celkového počtu</p>
-        <div class="bars" id="rest-bars"></div>
-        <div class="legend">
-          <span class="key"><span class="sw" style="background:var(--s1)"></span> přidáno</span>
-          <span class="key"><span class="sw" style="background:var(--s2)"></span> odebráno</span>
-          <span class="key"><span class="sw" style="background:var(--s3)"></span> upraveno</span>
-        </div>
-      </div>
-      <div class="panel">
-        <h3>Upravené relace</h3>
-        <p class="sub">Změna typu omezení nebo výjimky (<span class="mono">except</span>)</p>
-        <div class="tbl-scroll"><table class="data" id="rest-table"></table></div>
+    <p class="snote" id="turn-note"></p>
+    <div class="panel">
+      <h3>Podle typu omezení</h3>
+      <p class="sub">Přidané a odebrané relace</p>
+      <div class="bars" id="turn-bars"></div>
+      <div class="legend">
+        <span class="key"><span class="sw" style="background:var(--s1)"></span> přidáno</span>
+        <span class="key"><span class="sw" style="background:var(--s2)"></span> odebráno</span>
       </div>
     </div>
+    <div class="controls" id="turn-controls" style="margin-top:22px">
+      <input type="search" id="turn-q" placeholder="Hledat podle ID relace nebo hrany…"
+             aria-label="Hledat v zákazech odbočení">
+    </div>
+    <div class="tbl-scroll"><table class="data" id="turn-table"></table></div>
+    <div class="pager"><button class="f" id="turn-more">Zobrazit dalších 50</button>
+      <span id="turn-info"></span></div>
   </section>
 
-  <section id="detail">
+  <section id="dropped">
     <div class="shead">
-      <div class="eyebrow">detail</div>
-      <h2>Všechny změny hran</h2>
-      <div class="count" id="detail-count"></div>
+      <div class="eyebrow">kontrola</div>
+      <h2>Co se do přehledu nedostalo</h2>
+      <div class="count" id="dropped-count"></div>
     </div>
-    <div class="controls" id="detail-controls">
-      <input type="search" id="q" placeholder="Hledat podle názvu, ID nebo hodnoty…" aria-label="Hledat ve změnách hran">
-    </div>
-    <div class="tbl-scroll"><table class="data" id="detail-table"></table></div>
-    <div class="pager"><button class="f" id="more">Zobrazit dalších 100</button><span id="pager-info"></span></div>
+    <p class="snote">Přehled toho, co filtr zahodil — ať je vidět, že se nic podstatného
+      neztratilo. Tyhle změny nemění chování sítě v přiřazení, mění jen popis dat.</p>
+    <div class="panel"><div class="bars" id="dropped-bars"></div></div>
   </section>
 
   <footer>
-    <p><b>Metodika.</b> Z <span class="mono">ways_changed.csv</span> jsou použity jen řádky
-      s <span class="mono">confidence = high</span>; řádky s nízkou jistotou vznikají odvozením
-      hodnoty ze sloučené hrany a vyžadují ruční ověření. U atributu
-      <span class="mono">maxspeed</span> se navíc počítají jen hrany, které měly rychlost uvedenou
-      před i po — doplnění dosud chybějící rychlosti se za změnu nepovažuje.</p>
-    <p>ID objektů odkazují do OpenStreetMap. Data: OpenStreetMap přispěvatelé (ODbL).</p>
+    <p><b>Filtr.</b> Vstupem jsou jen změny hran s <span class="mono">confidence=high</span>.
+      Z nich projdou <span class="mono">oneway</span>, <span class="mono">access</span>,
+      <span class="mono">maxspeed</span> a <span class="mono">lanes</span> — u posledních dvou
+      jen tam, kde byla hodnota uvedená před i po; samotné doplnění dosud chybějícího tagu
+      není změna v terénu. Vypadává třída komunikace, název, číslo silnice a šířka.
+      Vrstvy <span class="mono">ways_added</span> a <span class="mono">ways_removed</span>
+      se nezpracovávají.</p>
+    <p><b>Ověření.</b> Odkaz <span class="mono">historie</span> u každého řádku vede na výpis
+      verzí objektu v OSM — je z něj vidět, kdo a kdy tag změnil a s jakým komentářem.
+      Hromadně to doplní <span class="mono">report/osm_history.py</span>.</p>
+    <p>Data: OpenStreetMap přispěvatelé (ODbL).</p>
   </footer>
 </div>
 <div id="tip" role="status"></div>
@@ -326,12 +336,7 @@ footer p{margin:0 0 8px}
 <script>
 const DATA = /*__DATA__*/null;
 
-const OSM = {way:"https://www.openstreetmap.org/way/", node:"https://www.openstreetmap.org/node/",
-             rel:"https://www.openstreetmap.org/relation/"};
-const ABBR = {trunk:"TR", trunk_link:"TR·L", primary:"PR", primary_link:"PR·L",
-  secondary:"SC", secondary_link:"SC·L", tertiary:"TE", tertiary_link:"TE·L",
-  unclassified:"UN", residential:"RE", living_street:"LS", motorway:"MW", motorway_link:"MW·L",
-  service:"SV"};
+const OSM = "https://www.openstreetmap.org/";
 const HW_CS = {trunk:"silnice pro motorová vozidla", trunk_link:"nájezd (trunk)",
   primary:"silnice I. třídy", primary_link:"nájezd (primary)", secondary:"silnice II. třídy",
   secondary_link:"nájezd (secondary)", tertiary:"silnice III. třídy", tertiary_link:"nájezd (tertiary)",
@@ -339,21 +344,55 @@ const HW_CS = {trunk:"silnice pro motorová vozidla", trunk_link:"nájezd (trunk
   motorway:"dálnice", motorway_link:"nájezd (motorway)", service:"účelová cesta"};
 const REST_CS = {no_u_turn:"zákaz otáčení", no_left_turn:"zákaz odbočení vlevo",
   no_right_turn:"zákaz odbočení vpravo", no_straight_on:"zákaz jízdy přímo",
+  no_entry:"zákaz vjezdu", no_exit:"zákaz výjezdu",
   only_straight_on:"pouze přímo", only_left_turn:"pouze vlevo", only_right_turn:"pouze vpravo"};
+const FLAG = {
+  local:      {label:"lokální editace", color:"#0ca30c", note:"malý changeset na jednom místě — nejlepší kandidát na reálnou změnu"},
+  micro:      {label:"mikrotagování",   color:"#fab219", note:"StreetComplete / Every Door — obvykle doplnění stavu, který platil už dřív"},
+  bulk:       {label:"hromadná editace",color:"#a9a7a0", note:"changeset s velkým počtem změn"},
+  campaign:   {label:"kampaň",          color:"#6f6d68", note:"jeden changeset mění tentýž tag na mnoha objektech — úklid dat"},
+  no_tag_edit:{label:"beze změny tagu", color:"#d03b3b", note:"v historii objektu odpovídající editace není — řádek vznikl zpracováním grafu"},
+  unknown:    {label:"nezjištěno",      color:"#898781", note:"historii se nepodařilo načíst"}
+};
 
-const el = (t, cls, html) => { const n = document.createElement(t);
-  if (cls) n.className = cls; if (html !== undefined) n.innerHTML = html; return n; };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const nfm = new Intl.NumberFormat("cs-CZ");
 const n = v => nfm.format(v);
-const wayLink = id => `<a class="mono" href="${OSM.way}${id}" target="_blank" rel="noopener">${id}</a>`;
-const abbr = c => ABBR[c] || c.slice(0, 2).toUpperCase();
+const el = (t, c, h) => { const x = document.createElement(t); if (c) x.className = c;
+  if (h !== undefined) x.innerHTML = h; return x; };
+const set = (id, html) => { const t = document.getElementById(id); if (t) t.innerHTML = html; };
+const txt = (id, v) => { const t = document.getElementById(id); if (t) t.textContent = v; };
 
-/* ---------- tooltip ---------- */
+const link = (kind, id) =>
+  `<a class="mono" href="${OSM}${kind}/${id}" target="_blank" rel="noopener">${id}</a>`;
+const histLink = (kind, id) =>
+  `<a class="mono hist" href="${OSM}${kind}/${id}/history" target="_blank" rel="noopener"
+      title="výpis verzí objektu v OSM">historie</a>`;
+const road = r => `${esc(r.name || "bez názvu")}<div class="tag"
+  title="${esc(HW_CS[r.hw] || r.hw)}">${esc(r.hw)}</div>`;
+
+/* historie z osm_history.py -------------------------------------------------- */
+const H = DATA.history || {};
+const hasHistory = Object.keys(H).length > 0;
+function badge(key) {
+  const h = H[key];
+  if (!h || !h.flag) return "";
+  const f = FLAG[h.flag] || FLAG.unknown;
+  const when = h.ts ? h.ts.slice(0, 10) : "";
+  const tipParts = [f.note];
+  if (h.user) tipParts.push(`${esc(h.user)}, ${when}`);
+  if (h.comment) tipParts.push(`„${esc(h.comment)}“`);
+  if (h.changeset) tipParts.push(`changeset ${h.changeset} (${n(h.changes || 0)} změn)`);
+  return `<span class="flag" style="--fc:${f.color}" data-tip="${tipParts.join("<br>")}">
+    ${f.label}</span>`;
+}
+const histCol = hasHistory ? "<th>Editace</th>" : "";
+const histCell = key => hasHistory ? `<td>${badge(key)}</td>` : "";
+
+/* tooltip -------------------------------------------------------------------- */
 const tip = document.getElementById("tip");
 document.addEventListener("pointerover", e => {
-  const t = e.target.closest("[data-tip]");
-  if (!t) return;
+  const t = e.target.closest("[data-tip]"); if (!t) return;
   tip.innerHTML = t.dataset.tip; tip.classList.add("on");
 });
 document.addEventListener("pointermove", e => {
@@ -368,107 +407,93 @@ document.addEventListener("pointerout", e => {
   if (e.target.closest("[data-tip]")) tip.classList.remove("on");
 });
 
-/* ---------- hlavička + KPI ---------- */
-const W = DATA.ways, N = DATA.nodes, R = DATA.restrictions;
-
-document.getElementById("meta").innerHTML = [
-  `<span class="chip">hrany <b>${n(W.total)}</b> z ${n(W.total_all)}</span>`,
-  `<span class="chip">uzly <b>${n(N.total)}</b></span>`,
-  `<span class="chip">relace <b>${n(R.total)}</b></span>`,
+/* hlavička ------------------------------------------------------------------- */
+const S = DATA.summary, W = DATA.ways, ND = DATA.nodes, R = DATA.restrictions;
+set("meta", [
+  `<span class="chip">k ověření <b>${n(S.total)}</b></span>`,
+  `<span class="chip">odfiltrováno <b>${n(S.excluded_total)}</b></span>`,
+  DATA.since ? `<span class="chip">referenční stav <b>${DATA.since}</b></span>` : "",
   `<span class="chip">generováno <b>${DATA.generated}</b></span>`
-].join("");
+].join(""));
 
-const kpis = [
-  {v: n(W.total), u: "", l: "porovnatelných změn na hranách",
-   s: `z ${n(W.total_all)} nalezených rozdílů; ${n(W.total_all - W.total_high)}× nízká jistota,
-       ${n(W.skipped_speed)}× jen doplněná rychlost`},
-  {v: n(W.km), u: "km", l: "délka dotčených úseků",
-   s: `nejvíce u tříd komunikací (${n(W.by_category[0].km)} km)`},
-  {v: n(W.classification.total), u: "", l: "hran přeřazených do jiné třídy",
-   s: `${n(W.classification.direction.down || 0)}× snížení, ${n(W.classification.direction.up || 0)}× zvýšení`},
-  {v: n(R.total), u: "", l: "změn v zákazech odbočení",
-   s: `${n(R.added)} přidáno, ${n(R.removed)} odebráno, ${n(R.changed)} upraveno`}
-];
-document.getElementById("kpis").innerHTML = kpis.map(k => `
-  <div class="kpi"><div class="v tnum">${k.v}<span class="u">${k.u}</span></div>
-  <div class="l">${k.l}</div><div class="s">${k.s}</div></div>`).join("");
+set("kpis", [
+  {v: n(S.total), l: "položek k ověření",
+   s: `z ${n(S.diff_total)} rozdílů, které diff našel`},
+  {v: n(S.ways), l: "změn na hranách",
+   s: `${n(W.oneway.length)}× jednosměrnost, ${n(W.speed.rows.length)}× rychlost,
+       ${n(W.lanes.length)}× pruhy, ${n(W.access.length)}× přístupnost`},
+  {v: n(S.nodes), l: "změn v křižovatkách",
+   s: `${n(ND.signals.length)}× signalizace, ${n(ND.arms.rows.length)}× počet ramen`},
+  {v: n(S.restrictions), l: "změn v zákazech odbočení",
+   s: `${n(R.added.length)} přidáno, ${n(R.removed.length)} odebráno`}
+].map(k => `<div class="kpi"><div class="v tnum">${k.v}</div>
+  <div class="l">${k.l}</div><div class="s">${k.s}</div></div>`).join(""));
 
-/* ---------- hrany: kategorie ---------- */
-document.getElementById("ways-count").textContent =
-  `${n(W.total)} změn · ${n(W.km)} km`;
-document.getElementById("ways-note").innerHTML =
-  `Z ${n(W.total_all)} nalezených rozdílů jich ${n(W.total_high)} nese příznak
-   <span class="mono">high</span>; zbylých ${n(W.total_all - W.total_high)} vzniklo odvozením ze
-   sloučené hrany. Dalších ${n(W.skipped_speed)} změn atributu <span class="mono">maxspeed</span>
-   jen doplňuje nebo maže dosud chybějící hodnotu — porovnávat se dá ${n(W.total)} změn.`;
+/* panel historie ------------------------------------------------------------- */
+if (hasHistory) {
+  const counts = {};
+  Object.values(H).forEach(h => { counts[h.flag] = (counts[h.flag] || 0) + 1; });
+  const order = ["local", "micro", "no_tag_edit", "bulk", "campaign", "unknown"];
+  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+  set("hist-panel", `
+    <h3>Původ změn podle historie OSM</h3>
+    <p class="sub">Ke každé položce dohledán changeset, který sledovaný tag změnil</p>
+    <div class="stack" style="height:18px">${order.filter(f => counts[f]).map(f =>
+      `<span style="background:${FLAG[f].color};flex:${counts[f]}"
+        data-tip="${FLAG[f].label}: ${n(counts[f])}<br>${FLAG[f].note}"></span>`).join("")}</div>
+    <div class="legend">${order.filter(f => counts[f]).map(f =>
+      `<span class="key"><span class="sw" style="background:${FLAG[f].color}"></span>
+        <b class="tnum">${n(counts[f])}</b> ${FLAG[f].label}</span>`).join("")}</div>
+    ${(DATA.historyCampaigns || []).length ? "" : ""}
+    <p class="sub" style="margin-top:14px">Položky označené jako kampaň nebo hromadná editace
+      jsou skoro jistě úklid dat — projít je stačí namátkou.</p>`);
+} else {
+  set("hist-panel", `
+    <h3>Historie OSM zatím nedotažená</h3>
+    <p class="sub">Bez ní nejde odlišit reálnou změnu v terénu od přetagování</p>
+    <p style="font-size:13.5px;color:var(--ink-2);max-width:70ch;margin:0 0 14px">
+      Doplní ji <span class="mono">report/osm_history.py</span>: ke každé položce dohledá
+      v historii objektu changeset, který sledovaný tag skutečně změnil, a přidá autora,
+      komentář, editor a velikost changesetu. Z toho se pozná kampaň (jeden changeset mění
+      tentýž tag na stovkách objektů) i případ, kdy k tagu žádná editace neexistuje
+      a řádek vznikl jen zpracováním grafu.</p>
+    <pre class="cmd">python report/osm_history.py ways_changed.csv nodes_changed.csv \\
+    turn_restrictions.csv --since RRRR-MM-DD -o report/history.json
 
-const catMax = Math.max(...W.by_category.map(c => c.count));
-document.getElementById("cat-bars").innerHTML = W.by_category.map(c => `
-  <div class="bar" data-tip="${esc(c.label)}: ${n(c.count)} hran, ${n(c.km)} km">
-    <span class="lab">${esc(c.label)}</span>
-    <span class="track"><span class="fill" style="width:${(100 * c.count / catMax).toFixed(1)}%"></span></span>
-    <span class="val tnum">${n(c.count)} <small>${n(c.km)} km</small></span>
-  </div>`).join("");
+python report/build_report.py ways_changed.csv nodes_changed.csv \\
+    turn_restrictions.csv --history report/history.json --since RRRR-MM-DD</pre>
+    <p class="sub" style="margin-top:12px">Mezitím vede u každého řádku odkaz
+      <span class="mono">historie</span> přímo na výpis verzí objektu v OSM.</p>`);
+}
 
-/* ---------- hrany: třídy ---------- */
-const dir = W.classification.direction;
-document.getElementById("cls-dir").innerHTML = `
-  <div class="stack" data-tip="snížení ${n(dir.down||0)} · zvýšení ${n(dir.up||0)}">
-    <span style="background:var(--down);flex:${dir.down||0}"></span>
-    <span style="background:var(--up);flex:${dir.up||0}"></span>
-  </div>
-  <div class="legend">
-    <span class="key"><span class="sw" style="background:var(--down)"></span>
-      <b class="tnum">${n(dir.down||0)}</b> sníženo o třídu níž</span>
-    <span class="key"><span class="sw" style="background:var(--up)"></span>
-      <b class="tnum">${n(dir.up||0)}</b> zvýšeno</span>
-  </div>`;
+/* jednosměrky ---------------------------------------------------------------- */
+txt("oneway-count", `${n(W.oneway.length)} hran`);
+set("oneway-table", `<thead><tr><th>ID hrany</th><th>Ulice</th><th>Změna</th>
+  <th class="num">km</th>${histCol}<th></th></tr></thead><tbody>` +
+  W.oneway.map(r => `<tr>
+    <td>${link("way", r.id)}</td>
+    <td>${road(r)}</td>
+    <td><span class="pill ${r.closed ? "pill-up" : "pill-down"}">${
+      r.closed ? "nově jednosměrná" : "zrušená jednosměrka"}</span>
+      <span class="mono" style="color:var(--muted);font-size:11.5px">
+        ${esc(r.old)} → ${esc(r.new)}</span></td>
+    <td class="num">${r.km.toFixed(2)}</td>
+    ${histCell(`way/${r.id}:oneway`)}
+    <td>${histLink("way", r.id)}</td></tr>`).join("") + "</tbody>");
 
-const topMax = Math.max(...W.classification.top.map(t => t.count));
-document.getElementById("cls-top").innerHTML = W.classification.top.map(t => `
-  <div class="bar" data-tip="${esc(HW_CS[t.old]||t.old)} → ${esc(HW_CS[t.new]||t.new)}: ${n(t.count)} hran">
-    <span class="lab mono" style="font-size:11.5px">${abbr(t.old)} → ${abbr(t.new)}</span>
-    <span class="track"><span class="fill" style="width:${(100*t.count/topMax).toFixed(1)}%;
-      background:var(--${t.dir === "down" ? "down" : "up"})"></span></span>
-    <span class="val tnum">${n(t.count)}</span>
-  </div>`).join("");
-
-/* ---------- matice ---------- */
-const C = W.classification.classes, M = W.classification.matrix;
-const mmax = Math.max(...M.flat());
-const alpha = v => v === 0 ? 0 : 8 + 92 * Math.sqrt(v / mmax);
-let mh = "<thead><tr><th></th>" + C.map(c =>
-  `<th title="${esc(HW_CS[c]||c)}">${abbr(c)}</th>`).join("") + "</tr></thead><tbody>";
-M.forEach((row, i) => {
-  mh += `<tr><th class="rowh" title="${esc(HW_CS[C[i]]||C[i])}">${abbr(C[i])}</th>`;
-  row.forEach((v, j) => {
-    const a = alpha(v);
-    mh += v === 0
-      ? `<td class="zero${i === j ? " diag" : ""}">0</td>`
-      : `<td class="${a >= 75 ? "hot" : ""}" style="--a:${a.toFixed(1)}"
-           data-tip="${esc(HW_CS[C[i]]||C[i])} → ${esc(HW_CS[C[j]]||C[j])}<br>${n(v)} hran">${n(v)}</td>`;
-  });
-  mh += "</tr>";
-});
-document.getElementById("matrix").innerHTML = mh + "</tbody>";
-document.getElementById("ramp").innerHTML = [1, 20, 40, 60, 80, 100].map(a =>
-  `<i style="background:color-mix(in srgb, var(--heat) ${a}%, var(--surface))"></i>`).join("");
-document.getElementById("ramp-max").textContent = `1 → ${n(mmax)}`;
-document.getElementById("abbr").innerHTML = C.map(c =>
-  `<div><b>${abbr(c)}</b><span>${esc(HW_CS[c] || c)}</span></div>`).join("");
-
-/* ---------- rychlosti: sklonový graf ---------- */
-const S = W.speed;
-document.getElementById("speed-sub").innerHTML =
-  `${n(S.rows.length)} hran (${n(S.km)} km) změnilo uvedenou rychlost. Dalších ${n(S.skipped)}
-   hran rychlost nově získalo nebo ztratilo — ty se zde nepočítají.`;
-document.getElementById("speed-n").textContent = n(S.rows.length);
+/* rychlosti ------------------------------------------------------------------ */
+const SP = W.speed;
+txt("speed-count", `${n(SP.rows.length)} hran · ${n(SP.km)} km`);
+set("speed-note", `${n(SP.slower)}× zpomalení, ${n(SP.faster)}× zrychlení.
+  Počítají se jen hrany, které měly rychlost uvedenou před i po — doplnění dosud
+  chybějícího <span class="mono">maxspeed</span> není změna v terénu.`);
 
 (function slope() {
+  if (!SP.rows.length) return;
   const w = 560, h = 320, top = 34, bot = 286, L = 118, Rx = 442;
-  const lv = S.levels, lo = Math.min(...lv), hi = Math.max(...lv);
-  const y = v => bot - (v - lo) / (hi - lo) * (bot - top);
-  const cmax = Math.max(...S.transitions.map(t => t.count));
+  const lv = SP.levels, lo = Math.min(...lv), hi = Math.max(...lv);
+  const y = v => hi === lo ? (top + bot) / 2 : bot - (v - lo) / (hi - lo) * (bot - top);
+  const cmax = Math.max(...SP.transitions.map(t => t.count));
   const bez = (t, x1, y1, x2, y2) => {
     const cx1 = x1 + 150, cx2 = x2 - 150, u = 1 - t;
     return [u*u*u*x1 + 3*u*u*t*cx1 + 3*u*t*t*cx2 + t*t*t*x2,
@@ -479,21 +504,20 @@ document.getElementById("speed-n").textContent = n(S.rows.length);
   s += `<text class="axis-lab" x="${L}" y="${top - 16}" text-anchor="end">bylo</text>`;
   s += `<text class="axis-lab" x="${Rx}" y="${top - 16}">je</text>`;
   lv.forEach(v => {
-    s += `<line x1="${L}" y1="${y(v)}" x2="${Rx}" y2="${y(v)}" stroke="var(--rule)" stroke-width="1"/>`;
-    s += `<text class="axis-lab" x="${L - 10}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
-    s += `<text class="axis-lab" x="${Rx + 10}" y="${y(v) + 4}">${v}</text>`;
+    s += `<line x1="${L}" y1="${y(v)}" x2="${Rx}" y2="${y(v)}" stroke="var(--rule)" stroke-width="1"/>
+      <text class="axis-lab" x="${L - 10}" y="${y(v) + 4}" text-anchor="end">${v}</text>
+      <text class="axis-lab" x="${Rx + 10}" y="${y(v) + 4}">${v}</text>`;
   });
   s += `<text class="axis-lab" x="${L - 10}" y="${bot + 26}" text-anchor="end">km/h</text>`;
-  S.transitions.forEach(t => {
+  SP.transitions.forEach(t => {
     const y1 = y(t.old), y2 = y(t.new), up = t.new > t.old;
-    const col = up ? "var(--up)" : "var(--down)";
-    const sw = 2 + 7 * (t.count / cmax);
     s += `<path d="M ${L} ${y1} C ${L + 150} ${y1}, ${Rx - 150} ${y2}, ${Rx} ${y2}"
-      stroke="${col}" stroke-width="${sw.toFixed(1)}" opacity=".85"
-      data-tip="${t.old} → ${t.new} km/h<br>${t.count} ${t.count === 1 ? "hrana" : "hran"}"/>`;
+      stroke="var(--${up ? "up" : "down"})" stroke-width="${(2 + 7 * t.count / cmax).toFixed(1)}"
+      opacity=".85" data-tip="${t.old} → ${t.new} km/h<br>${t.count} ${
+        t.count === 1 ? "hrana" : "hran"}"/>`;
   });
   let slow = 0, fast = 0;
-  S.transitions.forEach(t => {
+  SP.transitions.forEach(t => {
     const up = t.new > t.old;
     const at = up ? .70 - .05 * (fast++ % 3) : .30 + .05 * (slow++ % 3);
     const [px, py] = bez(at, L, y(t.old), Rx, y(t.new));
@@ -501,150 +525,145 @@ document.getElementById("speed-n").textContent = n(S.rows.length);
       text-anchor="middle">${t.count}</text>`;
   });
   lv.forEach(v => {
-    s += `<circle cx="${L}" cy="${y(v)}" r="4.5" fill="var(--surface)" stroke="var(--axis)" stroke-width="2"/>`;
-    s += `<circle cx="${Rx}" cy="${y(v)}" r="4.5" fill="var(--surface)" stroke="var(--axis)" stroke-width="2"/>`;
+    s += `<circle cx="${L}" cy="${y(v)}" r="4.5" fill="var(--surface)" stroke="var(--axis)" stroke-width="2"/>
+      <circle cx="${Rx}" cy="${y(v)}" r="4.5" fill="var(--surface)" stroke="var(--axis)" stroke-width="2"/>`;
   });
-  document.getElementById("speed-slope").innerHTML = s + "</svg>";
+  set("speed-slope", s + "</svg>");
 })();
 
-document.getElementById("speed-table").innerHTML =
-  `<thead><tr><th>ID hrany</th><th>Název</th><th>Bylo</th><th>Je</th><th class="num">Δ</th><th class="num">km</th></tr></thead><tbody>` +
-  S.rows.map(r => `<tr>
-    <td>${wayLink(r.id)}</td>
-    <td>${esc(r.name || "—")}<div class="tag" style="margin-top:2px">${esc(r.hw)}</div></td>
-    <td class="num oldv">${r.old}</td>
-    <td class="num newv">${r.new}</td>
+set("speed-table", `<thead><tr><th>ID hrany</th><th>Ulice</th><th class="num">Bylo</th>
+  <th class="num">Je</th><th class="num">Δ</th>${histCol}<th></th></tr></thead><tbody>` +
+  SP.rows.map(r => `<tr>
+    <td>${link("way", r.id)}</td><td>${road(r)}</td>
+    <td class="num oldv">${r.old}</td><td class="num newv">${r.new}</td>
     <td class="num ${r.delta > 0 ? "d-up" : "d-down"}">${r.delta > 0 ? "+" : ""}${r.delta}</td>
-    <td class="num" style="color:var(--muted)">${r.km.toFixed(2)}</td></tr>`).join("") + "</tbody>";
+    ${histCell(`way/${r.id}:maxspeed`)}
+    <td>${histLink("way", r.id)}</td></tr>`).join("") + "</tbody>");
 
-/* ---------- ostatní atributy ---------- */
-const ATTR_TITLE = {lanes: ["Jízdní pruhy", "atribut lanes"], oneway: ["Jednosměrnost", "atribut oneway"],
-  access: ["Přístupnost", "atribut access"], width: ["Šířka vozovky", "atribut width, v metrech"],
-  ref: ["Číslo silnice", "atribut ref"]};
-document.getElementById("attr-panels").innerHTML = Object.entries(W.attrs).map(([k, rows]) => {
-  const total = rows.reduce((a, r) => a + r.count, 0);
-  const max = Math.max(...rows.map(r => r.count));
-  return `<div class="panel">
-    <h3>${ATTR_TITLE[k][0]} <span class="mono" style="color:var(--muted);font-weight:400">${n(total)}</span></h3>
-    <p class="sub">${ATTR_TITLE[k][1]}</p>
-    <div class="bars">${rows.slice(0, 8).map(r => `
-      <div class="bar" data-tip="${esc(r.old)} → ${esc(r.new)}: ${n(r.count)} hran">
-        <span class="lab mono" style="font-size:11.5px">${esc(r.old)} <span class="arrow">→</span> ${esc(r.new)}</span>
-        <span class="track"><span class="fill" style="width:${(100 * r.count / max).toFixed(1)}%"></span></span>
-        <span class="val tnum">${n(r.count)}</span></div>`).join("")}</div>
-  </div>`;
-}).join("");
+/* pruhy a přístupnost -------------------------------------------------------- */
+txt("cap-count", `${n(W.lanes.length + W.access.length)} hran`);
+set("lanes-sub", `${n(W.lanes.length)} hran změnilo počet pruhů z hodnoty na hodnotu`);
+set("lanes-table", `<thead><tr><th>ID hrany</th><th>Ulice</th><th>Změna</th>
+  <th class="num">km</th>${histCol}<th></th></tr></thead><tbody>` +
+  (W.lanes.length ? W.lanes.map(r => `<tr>
+    <td>${link("way", r.id)}</td><td>${road(r)}</td>
+    <td><span class="oldv mono">${esc(r.old)}</span><span class="arrow">→</span>
+      <span class="newv mono">${esc(r.new)}</span></td>
+    <td class="num">${r.km.toFixed(2)}</td>
+    ${histCell(`way/${r.id}:lanes`)}
+    <td>${histLink("way", r.id)}</td></tr>`).join("")
+    : `<tr><td colspan="6" style="color:var(--muted)">Žádná změna počtu pruhů.</td></tr>`) +
+  "</tbody>");
 
-/* ---------- názvy ---------- */
-const NM = W.names;
-document.getElementById("name-sub").innerHTML =
-  `${n(NM.total)} hran změnilo název: ${n(NM.added)}× název doplněn, ${n(NM.removed)}× odebrán,
-   ${n(NM.total - NM.added - NM.removed)}× přepsán. Většinou jde o pravopisné úpravy —
-   velká písmena, mezery a znaky.`;
-document.getElementById("name-table").innerHTML =
-  `<thead><tr><th>ID hrany</th><th>Bylo</th><th>Je</th></tr></thead><tbody>` +
-  NM.examples.map(r => `<tr><td>${wayLink(r.id)}</td>
-    <td class="oldv">${esc(r.old)}</td><td class="newv">${esc(r.new)}</td></tr>`).join("") + "</tbody>";
+set("access-sub", `${n(W.access.filter(r => r.blocking).length)}× omezení vjezdu doplněno,
+  ${n(W.access.filter(r => !r.blocking).length)}× uvolněno`);
+set("access-table", `<thead><tr><th>ID hrany</th><th>Ulice</th><th>Změna</th>
+  ${histCol}<th></th></tr></thead><tbody>` +
+  (W.access.length ? W.access.map(r => `<tr>
+    <td>${link("way", r.id)}</td><td>${road(r)}</td>
+    <td><span class="pill ${r.blocking ? "pill-up" : "pill-down"}">${
+      r.blocking ? "omezeno" : "uvolněno"}</span>
+      <span class="mono" style="color:var(--muted);font-size:11.5px">
+        ${esc(r.old)} → ${esc(r.new)}</span></td>
+    ${histCell(`way/${r.id}:access`)}
+    <td>${histLink("way", r.id)}</td></tr>`).join("")
+    : `<tr><td colspan="5" style="color:var(--muted)">Žádná změna přístupnosti.</td></tr>`) +
+  "</tbody>");
 
-/* ---------- uzly ---------- */
-document.getElementById("nodes-count").textContent = `${n(N.total)} uzlů`;
-const A = N.arms;
-document.getElementById("arms-sub").innerHTML =
-  `${n(A.total)} křižovatek změnilo počet připojených ramen — ${n(A.more)}× přibylo, ${n(A.less)}× ubylo.`;
-const armMax = Math.max(...A.pairs.map(p => p.count));
-document.getElementById("arms-bars").innerHTML = A.pairs
-  .slice().sort((a, b) => b.count - a.count).map(p => `
+/* křižovatky ----------------------------------------------------------------- */
+txt("node-count", `${n(ND.signals.length + ND.arms.rows.length)} uzlů`);
+set("signal-sub", `${n(ND.signals.filter(s => s.added).length)}× signalizace přidána,
+  ${n(ND.signals.filter(s => !s.added).length)}× zrušena`);
+set("signal-table", `<thead><tr><th>ID uzlu</th><th>Změna</th>${histCol}<th></th></tr></thead><tbody>` +
+  (ND.signals.length ? ND.signals.map(r => `<tr>
+    <td>${link("node", r.id)}</td>
+    <td><span class="pill ${r.added ? "pill-up" : "pill-down"}">${
+      r.added ? "signalizace přidána" : "signalizace zrušena"}</span></td>
+    ${histCell(`node/${r.id}:highway`)}
+    <td>${histLink("node", r.id)}</td></tr>`).join("")
+    : `<tr><td colspan="4" style="color:var(--muted)">Žádná změna signalizace.</td></tr>`) +
+  "</tbody>");
+
+const A = ND.arms;
+set("arms-sub", `${n(A.rows.length)} křižovatek změnilo počet ramen — ${n(A.more)}× přibylo,
+  ${n(A.less)}× ubylo`);
+const armMax = Math.max(1, ...A.pairs.map(p => p.count));
+set("arms-bars", A.pairs.map(p => `
   <div class="bar" data-tip="${p.old} → ${p.new} ramen: ${n(p.count)} křižovatek">
     <span class="lab mono" style="font-size:11.5px">${p.old} <span class="arrow">→</span> ${p.new}</span>
     <span class="track"><span class="fill" style="width:${(100 * p.count / armMax).toFixed(1)}%;
       background:var(--${p.new > p.old ? "up" : "down"})"></span></span>
-    <span class="val tnum">${n(p.count)}</span></div>`).join("");
+    <span class="val tnum">${n(p.count)}</span></div>`).join(""));
+set("arms-table", `<thead><tr><th>ID uzlu</th><th>Ramen bylo</th><th>Ramen je</th>
+  <th class="num">Δ</th>${histCol}<th></th></tr></thead><tbody>` +
+  A.rows.map(r => `<tr>
+    <td>${link("node", r.id)}</td>
+    <td class="num oldv">${r.old}</td><td class="num newv">${r.new}</td>
+    <td class="num ${r.delta > 0 ? "d-up" : "d-down"}">${r.delta > 0 ? "+" : ""}${r.delta}</td>
+    ${histCell(`node/${r.id}:arms`)}
+    <td>${histLink("node", r.id)}</td></tr>`).join("") + "</tbody>");
 
-const CT = N.control;
-document.getElementById("ctrl-sub").innerHTML =
-  `Světelná signalizace: ${n(CT.signals.removed)}× zrušena, ${n(CT.signals.added)}× přidána.
-   Přechody: ${n(CT.crossings.removed)}× zrušen, ${n(CT.crossings.added)}× přidán.`;
-document.getElementById("ctrl-table").innerHTML =
-  `<thead><tr><th>ID uzlu</th><th>Značka</th><th>Bylo</th><th>Je</th></tr></thead><tbody>` +
-  CT.rows.map(r => `<tr>
-    <td><a class="mono" href="${OSM.node}${r.id}" target="_blank" rel="noopener">${r.id}</a></td>
-    <td><span class="tag">${esc(r.attr)}</span></td>
-    <td class="oldv">${esc(r.old)}</td><td class="newv">${esc(r.new)}</td></tr>`).join("") + "</tbody>";
+/* zákazy odbočení ------------------------------------------------------------ */
+txt("turn-count", `${n(R.added.length + R.removed.length + R.retyped.length + R.except_changed.length)} relací`);
+set("turn-note", `${n(R.added.length)} nových zákazů, ${n(R.removed.length)} zrušených,
+  ${n(R.retyped.length + R.except_changed.length)} se změněným typem nebo výjimkou.
+  U dalších ${n(R.changed_members)} relací se změnili jen členové — jiné hrany
+  <span class="mono">from</span>/<span class="mono">via</span>/<span class="mono">to</span>,
+  typ zůstal. Velká část přírůstků je zákaz, který v terénu platil vždy, jen doteď nebyl
+  v OSM zmapovaný — pro model je to stejně tak oprava.`);
 
-/* ---------- omezení ---------- */
-document.getElementById("rels-count").textContent = `${n(R.total)} relací`;
-document.getElementById("rels-note").innerHTML =
-  `${n(R.added)} nových zákazů odbočení, ${n(R.removed)} zrušených a ${n(R.changed)} upravených.
-   U ${n(R.geometry_only)} upravených relací zůstal typ i výjimky stejné — změnili se jen členové
-   relace (jiné hrany <span class="mono">from</span>/<span class="mono">via</span>/<span class="mono">to</span>).`;
-const rmax = Math.max(...R.by_type.map(t => t.added + t.removed + t.changed));
-document.getElementById("rest-bars").innerHTML = R.by_type.map(t => {
-  const tot = t.added + t.removed + t.changed;
+const tmax = Math.max(1, ...R.by_type.map(t => t.added + t.removed));
+set("turn-bars", R.by_type.map(t => {
+  const tot = t.added + t.removed;
   const seg = (v, c, lab) => v ? `<span style="background:var(--${c});flex:${v}"
     data-tip="${esc(REST_CS[t.type] || t.type)} — ${lab}: ${n(v)}"></span>` : "";
   return `<div class="bar">
     <span class="lab" title="${esc(t.type)}">${esc(REST_CS[t.type] || t.type)}</span>
-    <span class="stack" style="width:${(100 * tot / rmax).toFixed(1)}%">
-      ${seg(t.added, "s1", "přidáno")}${seg(t.removed, "s2", "odebráno")}${seg(t.changed, "s3", "upraveno")}
-    </span>
+    <span class="stack" style="width:${(100 * tot / tmax).toFixed(1)}%">
+      ${seg(t.added, "s1", "přidáno")}${seg(t.removed, "s2", "odebráno")}</span>
     <span class="val tnum">${n(tot)}</span></div>`;
-}).join("");
+}).join(""));
 
-const restRows = R.retyped.map(r => ({id: r.id, what: "typ omezení",
-    old: REST_CS[r.old] || r.old, new: REST_CS[r.new] || r.new}))
-  .concat(R.except_changed.map(r => ({id: r.id, what: "výjimka (except)", old: r.old, new: r.new})));
-document.getElementById("rest-table").innerHTML =
-  `<thead><tr><th>ID relace</th><th>Změna</th><th>Bylo</th><th>Je</th></tr></thead><tbody>` +
-  (restRows.length ? restRows.map(r => `<tr>
-    <td><a class="mono" href="${OSM.rel}${r.id}" target="_blank" rel="noopener">${r.id}</a></td>
-    <td><span class="tag">${esc(r.what)}</span></td>
-    <td class="oldv">${esc(r.old)}</td><td class="newv">${esc(r.new)}</td></tr>`).join("")
-    : `<tr><td colspan="4" style="color:var(--muted)">Žádná změna typu ani výjimky.</td></tr>`) +
-  "</tbody>";
-
-/* ---------- detailní tabulka ---------- */
-const T = W.table;
-const CATS = [...new Set(T.map(r => r.cat))];
-const CAT_LABEL = Object.fromEntries(W.by_category.map(c => [c.key, c.label]));
-let activeCat = null, shown = 100, query = "";
-
-const ctrls = document.getElementById("detail-controls");
-CATS.forEach(c => {
-  const b = el("button", "f", CAT_LABEL[c] || c);
-  b.setAttribute("aria-pressed", "false");
-  b.onclick = () => {
-    activeCat = activeCat === c ? null : c;
-    [...ctrls.querySelectorAll("button.f")].forEach(x =>
-      x.setAttribute("aria-pressed", String(x === b && activeCat === c)));
-    shown = 100; render();
-  };
-  ctrls.appendChild(b);
+const turnRows = R.added.concat(R.removed)
+  .concat(R.retyped.map(r => ({...r, retyped: `${REST_CS[r.old] || r.old} → ${REST_CS[r.new] || r.new}`})))
+  .concat(R.except_changed.map(r => ({...r, exceptChange: `${r.old} → ${r.new}`})));
+const CHANGE_PILL = {added: ["pill-up", "přidán"], removed: ["pill-down", "zrušen"],
+                     changed: ["pill-flat", "upraven"]};
+let turnShown = 50, turnQuery = "";
+document.getElementById("turn-q").addEventListener("input", e => {
+  turnQuery = e.target.value.trim().toLowerCase(); turnShown = 50; renderTurns();
 });
-document.getElementById("q").addEventListener("input", e => {
-  query = e.target.value.trim().toLowerCase(); shown = 100; render();
-});
-document.getElementById("more").onclick = () => { shown += 100; render(); };
+document.getElementById("turn-more").onclick = () => { turnShown += 50; renderTurns(); };
 
-function filtered() {
-  return T.filter(r => (!activeCat || r.cat === activeCat) &&
-    (!query || (r.name + " " + r.id + " " + r.old + " " + r.new + " " + r.hw).toLowerCase().includes(query)));
-}
-function render() {
-  const rows = filtered(), slice = rows.slice(0, shown);
-  document.getElementById("detail-table").innerHTML =
-    `<thead><tr><th>ID hrany</th><th>Název</th><th>Atribut</th><th>Bylo</th><th>Je</th>
-      <th class="num">km</th></tr></thead><tbody>` +
+function renderTurns() {
+  const rows = turnRows.filter(r => !turnQuery ||
+    `${r.id} ${r.from} ${r.via} ${r.to}`.toLowerCase().includes(turnQuery));
+  const slice = rows.slice(0, turnShown);
+  set("turn-table", `<thead><tr><th>ID relace</th><th>Změna</th><th>Omezení</th>
+    <th>from → via → to</th>${histCol}<th></th></tr></thead><tbody>` +
     slice.map(r => `<tr>
-      <td>${wayLink(r.id)}</td>
-      <td>${esc(r.name || "—")}</td>
-      <td><span class="tag">${esc(r.attr)}</span></td>
-      <td class="oldv">${esc(r.old)}</td>
-      <td class="newv">${esc(r.new)}</td>
-      <td class="num" style="color:var(--muted)">${r.km.toFixed(2)}</td></tr>`).join("") + "</tbody>";
-  document.getElementById("pager-info").textContent =
-    `zobrazeno ${n(slice.length)} z ${n(rows.length)}`;
-  document.getElementById("more").style.display = slice.length < rows.length ? "" : "none";
-  document.getElementById("detail-count").textContent = `${n(rows.length)} řádků`;
+      <td>${link("relation", r.id)}</td>
+      <td><span class="pill ${CHANGE_PILL[r.change][0]}">${CHANGE_PILL[r.change][1]}</span></td>
+      <td>${esc(REST_CS[r.type] || r.type)}${r.retyped ? `<div class="tag">${esc(r.retyped)}</div>` : ""}
+        ${r.exceptChange ? `<div class="tag">výjimka ${esc(r.exceptChange)}</div>` :
+          (r.except ? `<div class="tag">mimo ${esc(r.except)}</div>` : "")}</td>
+      <td class="mono" style="font-size:11.5px;color:var(--ink-2)">${esc(r.from)}
+        <span class="arrow">→</span> ${esc(r.via || "—")}
+        <span class="arrow">→</span> ${esc(r.to)}</td>
+      ${histCell(`relation/${r.id}`)}
+      <td>${histLink("relation", r.id)}</td></tr>`).join("") + "</tbody>");
+  txt("turn-info", `zobrazeno ${n(slice.length)} z ${n(rows.length)}`);
+  document.getElementById("turn-more").style.display = slice.length < rows.length ? "" : "none";
 }
-render();
+renderTurns();
+
+/* odfiltrováno --------------------------------------------------------------- */
+txt("dropped-count", `${n(S.excluded_total)} změn`);
+const dmax = Math.max(1, ...S.excluded.map(d => d.count));
+set("dropped-bars", S.excluded.map(d => `
+  <div class="bar" data-tip="${esc(d.label)}: ${n(d.count)} změn">
+    <span class="lab">${esc(d.label)}</span>
+    <span class="track"><span class="fill" style="width:${(100 * d.count / dmax).toFixed(1)}%;
+      background:var(--axis)"></span></span>
+    <span class="val tnum">${n(d.count)}</span></div>`).join(""));
 </script>
