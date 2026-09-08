@@ -130,6 +130,21 @@ class ChangesetBatchTest(unittest.TestCase):
         self.assertEqual(result[7]["comment"], "c")
 
 
+class CacheTest(unittest.TestCase):
+    def test_zaklada_adresar_pro_cache(self):
+        """Běh z adresáře bez report/ nesmí spadnout při ukládání cache."""
+        import tempfile
+
+        from osm_history import Api
+
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "report" / "cache.json"
+            api = Api("https://example.invalid", target, sleep=0)
+            api.cache["way/1/history.json"] = {"elements": []}
+            api.save()
+            self.assertTrue(target.exists())
+
+
 class TimestampTest(unittest.TestCase):
     def test_parsuje_zulu(self):
         self.assertEqual(parse_ts("2024-05-01T12:00:00Z").year, 2024)

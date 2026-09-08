@@ -130,6 +130,7 @@ class Api:
     def __init__(self, base: str, cache: Path, sleep: float = 0.4, verbose: bool = True):
         self.base, self.sleep, self.verbose = base.rstrip("/"), sleep, verbose
         self.cache_path = cache
+        cache.parent.mkdir(parents=True, exist_ok=True)
         self.cache = json.loads(cache.read_text(encoding="utf-8")) if cache.exists() else {}
         self.fetched = 0
 
